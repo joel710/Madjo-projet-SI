@@ -1,0 +1,1111 @@
+<!--
+  @author VotreNomOuPseudo
+  @date YYYY-MM-DD
+  @description Template HTML principal pour la page du tableau de bord de l'administration.
+               Ce template définit la structure globale de la page, y compris la barre latérale (sidebar),
+               la barre supérieure (topbar), et la zone de contenu principal où les différentes sections
+               (tableau de bord, gestion des clients, etc.) sont affichées.
+               Il utilise des composants enfants pour la sidebar, topbar et les modales.
+               Des directives Angular comme *ngIf et *ngFor sont utilisées pour le rendu conditionnel
+               et l'itération sur les listes de données.
+               Les classes Tailwind CSS sont utilisées pour le style.
+-->
+
+<!--
+  Structure de base de la page : un conteneur flex qui occupe tout l'écran (h-screen)
+  et empêche le débordement au niveau racine (overflow-hidden).
+  'flex' établit un contexte de formatage flexbox pour ses enfants directs (sidebar et contenu principal).
+-->
+<div class="flex h-screen overflow-hidden">
+
+  <!--
+    Composant Sidebar (barre latérale de navigation) : <app-admin-sidebar>
+    - [isCollapsed]: Propriété d'entrée (Input) liée à la variable 'isSidebarCollapsed' du composant TypeScript.
+                     Permet de contrôler l'état (réduit/étendu) de la sidebar depuis le composant parent.
+    - (toggleCollapseClicked): Événement de sortie (Output) émis par la sidebar lorsque l'utilisateur clique
+                               pour basculer son état. Il est lié à la méthode 'toggleSidebar()' du parent.
+    - (navigate): Événement de sortie émis lorsque l'utilisateur clique sur un élément de navigation.
+                  Lié à la méthode 'onSectionNavigate($event)' pour changer la section affichée.
+  -->
+  <app-admin-sidebar [isCollapsed]="isSidebarCollapsed" (toggleCollapseClicked)="toggleSidebar()"
+    (navigate)="onSectionNavigate($event)">
+  </app-admin-sidebar>
+
+  <!--
+    Conteneur du contenu principal :
+    - id="mainContent": Identifiant unique pour cet élément.
+    - class="content flex-1 overflow-auto transition-all duration-300":
+      - 'content': Classe personnalisée potentielle (non définie par Tailwind par défaut).
+      - 'flex-1': Permet à cet élément de prendre toute la place disponible dans le conteneur flex parent
+                   (après que la sidebar ait pris sa largeur).
+      - 'overflow-auto': Ajoute des barres de défilement si le contenu dépasse la taille du conteneur.
+      - 'transition-all duration-300': Applique une transition douce à toutes les propriétés modifiables
+                                       (ici, principalement la marge) sur une durée de 300ms.
+    - [class.ml-20], [class.ml-64]: Liaison de classe conditionnelle pour la marge à gauche en mode desktop.
+                                     'ml-20' (margin-left: 5rem) si la sidebar est réduite ET qu'on n'est pas en vue mobile.
+                                     'ml-64' (margin-left: 16rem) si la sidebar est étendue ET qu'on n'est pas en vue mobile.
+                                     Ces classes ajustent la position du contenu principal en fonction de l'état de la sidebar.
+    - [ngClass]: Directive Angular pour ajouter/supprimer des classes de manière dynamique.
+                 Gère les marges pour différentes combinaisons d'états de la sidebar (réduite/étendue)
+                 et de la vue (mobile/desktop), y compris l'état de la sidebar mobile.
+                 - 'md:ml-20': Marge de 5rem sur les écrans moyens et plus si la sidebar est réduite.
+                 - 'md:ml-64': Marge de 16rem sur les écrans moyens et plus si la sidebar est étendue.
+                 - 'ml-0': Aucune marge à gauche si la sidebar mobile est fermée en vue mobile.
+                 - 'ml-64': Marge de 16rem si la sidebar mobile est ouverte en vue mobile (pour faire de la place).
+  -->
+  <div id="mainContent" class="content flex-1 overflow-auto transition-all duration-300"
+    [class.ml-20]="isSidebarCollapsed && !isMobileView" [class.ml-64]="!isSidebarCollapsed && !isMobileView"
+    [ngClass]="{'md:ml-20': isSidebarCollapsed, 'md:ml-64': !isSidebarCollapsed, 'ml-0': !isMobileSidebarOpen && isMobileView, 'ml-64': isMobileSidebarOpen && isMobileView }">
+
+    <!--
+      Composant Topbar (barre supérieure) : <app-admin-topbar>
+      - [pageTitle]: Input lié à 'currentPageTitle' pour afficher le titre de la section courante.
+      - [userName]: Input pour le nom de l'utilisateur (admin).
+      - [userRole]: Input pour le rôle de l'utilisateur.
+      - (mobileToggleClicked): Output émis lorsque l'icône "burger" (menu mobile) est cliquée.
+                               Lié à 'toggleMobileSidebar()' pour afficher/masquer la sidebar en mode mobile.
+    -->
+    <app-admin-topbar [pageTitle]="currentPageTitle" [userName]="adminUserName" [userRole]="adminUserRole"
+      (mobileToggleClicked)="toggleMobileSidebar()">
+    </app-admin-topbar>
+
+    <!--
+      Zone de Notification :
+      - id="notification": Identifiant pour une potentielle manipulation via JavaScript direct (bien que généralement
+                           contrôlé par des variables Angular et *ngIf dans un composant dédié).
+      - class="fixed top-20 right-4 z-[1000] hidden":
+        - 'fixed': Positionne l'élément par rapport à la fenêtre du navigateur.
+        - 'top-20 right-4': Le positionne à 20 unités du haut et 4 unités de la droite.
+        - 'z-[1000]': z-index élevé pour s'assurer qu'il s'affiche au-dessus des autres éléments.
+        - 'hidden': Initialement masqué (sera rendu visible par JavaScript/Angular).
+      - Note: "will be refactored into a service/component later" indique une amélioration future prévue.
+    -->
+    <div id="notification" class="fixed top-20 right-4 z-[1000] hidden">
+      <!-- Contenu de la notification (icône et message) -->
+      <div class="bg-green-500 text-white px-4 py-2 rounded shadow-lg flex items-center">
+        <i class="fas fa-check-circle mr-2"></i> <!-- Icône Font Awesome -->
+        <span id="notificationMessage">Action réussie !</span> <!-- Message affiché -->
+      </div>
+    </div>
+
+    <!--
+      Loader Principal (indicateur de chargement critique) :
+      - *ngIf="isLoadingCritical": Directive structurelle Angular. Le contenu de cette div ne sera rendu
+                                   dans le DOM que si la propriété 'isLoadingCritical' du composant TypeScript est 'true'.
+                                   Utilisé pour afficher un indicateur de chargement pendant que les données essentielles
+                                   du tableau de bord sont récupérées.
+      - class="fixed inset-0 z-50 ...":
+        - 'fixed inset-0': Couvre toute la page.
+        - 'z-50': z-index pour s'afficher au-dessus du contenu mais potentiellement en dessous de la notification si elle est plus haute.
+        - 'flex items-center justify-center': Centre le contenu du loader (l'icône et le texte) à l'écran.
+        - 'bg-white bg-opacity-80': Fond blanc semi-transparent pour masquer légèrement le contenu derrière.
+    -->
+    <div *ngIf="isLoadingCritical" class="fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-80">
+      <div class="flex flex-col items-center"> <!-- Conteneur pour l'icône et le texte, alignés verticalement -->
+        <!-- Icône SVG animée (spinner) -->
+        <svg class="animate-spin h-12 w-12 text-sky-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none"
+          viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+        </svg>
+        <!-- Message de chargement -->
+        <span class="text-sky-700 text-lg font-semibold">Chargement du tableau de bord...</span>
+      </div>
+    </div>
+
+    <!--
+      Indicateur de Chargement Secondaire :
+      - *ngIf="!isLoadingCritical && isLoadingSecondary": S'affiche seulement si le chargement critique est terminé
+                                                          ET que le chargement secondaire est en cours.
+                                                          Utilisé pour les données moins prioritaires.
+      - class="fixed top-4 right-4 z-40 ...": Positionné en haut à droite, moins proéminent que le loader principal.
+    -->
+    <div *ngIf="!isLoadingCritical && isLoadingSecondary"
+      class="fixed top-4 right-4 z-40 flex items-center bg-white border border-sky-200 shadow px-4 py-2 rounded-lg">
+      <!-- Icône SVG animée (spinner plus petit) -->
+      <svg class="animate-spin h-5 w-5 text-sky-500 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none"
+        viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+      </svg>
+      <!-- Message de chargement secondaire -->
+      <span class="text-sky-600 text-sm">Chargement des données secondaires...</span>
+    </div>
+
+    <!--
+      Conteneur <main> pour les sections de contenu principales :
+      - class="p-6": Applique un padding de 1.5rem (24px) sur tous les côtés.
+    -->
+    <main class="p-6">
+      <!-- La suite du contenu (sections spécifiques comme Dashboard, Clients, etc.) sera commentée séparément. -->
+
+      <!--
+        SECTION: Tableau de Bord (Dashboard)
+        - id="dashboard-section": Identifiant unique pour cette section.
+        - class="section-content": Classe commune pour styler les sections de contenu (potentiellement).
+        - [class.hidden]="currentSection !== 'dashboard'": La directive Angular [class.hidden] ajoute la classe CSS 'hidden'
+                                                            (qui généralement applique 'display: none;') si l'expression est vraie.
+                                                            Cette section est donc masquée si la variable 'currentSection'
+                                                            dans le composant TypeScript n'est pas égale à 'dashboard'.
+                                                            C'est ainsi que la navigation entre sections fonctionne : seule la
+                                                            section active est visible.
+      -->
+      <div id="dashboard-section" class="section-content" [class.hidden]="currentSection !== 'dashboard'">
+
+        <!--
+          Grille pour les Indicateurs Clés de Performance (KPIs) :
+          - class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6":
+            - 'grid': Active l'affichage en grille (CSS Grid).
+            - 'grid-cols-1': Sur les petits écrans, une seule colonne (les KPIs s'empilent).
+            - 'md:grid-cols-2': Sur les écrans de taille moyenne (md) et plus, deux colonnes.
+            - 'lg:grid-cols-4': Sur les grands écrans (lg) et plus, quatre colonnes.
+            - 'gap-6': Espace de 1.5rem (24px) entre les éléments de la grille.
+            - 'mb-6': Marge inférieure de 1.5rem.
+        -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+          <!-- Carte KPI : Clients -->
+          <!--
+            Style commun des cartes KPI :
+            - 'bg-white': Fond blanc.
+            - 'rounded-lg': Coins arrondis (large).
+            - 'shadow': Ombre portée.
+            - 'p-6': Padding de 1.5rem.
+          -->
+          <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center"> <!-- Conteneur flex pour aligner l'icône et le texte -->
+              <div class="p-3 rounded-full bg-sky-100 text-sky-600 mr-4"> <!-- Cercle coloré pour l'icône -->
+                <i class="fas fa-users text-xl"></i> <!-- Icône Font Awesome pour les clients -->
+              </div>
+              <div>
+                <p class="text-gray-500">Clients</p> <!-- Libellé du KPI -->
+                <!--
+                  {{ totalClients }}: Interpolation Angular. Affiche la valeur de la propriété 'totalClients'
+                                       (ou le résultat du getter `totalClients()`) du composant TypeScript.
+                -->
+                <h3 class="text-2xl font-bold">{{ totalClients }}</h3> <!-- Valeur du KPI -->
+              </div>
+            </div>
+          </div>
+          <!-- Carte KPI : Réservations -->
+          <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+              <div class="p-3 rounded-full bg-green-100 text-green-600 mr-4">
+                <i class="fas fa-calendar-check text-xl"></i> <!-- Icône pour les réservations -->
+              </div>
+              <div>
+                <p class="text-gray-500">Réservations</p>
+                <h3 class="text-2xl font-bold">{{ totalReservations }}</h3>
+              </div>
+            </div>
+          </div>
+          <!-- Carte KPI : Voyages -->
+          <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+              <div class="p-3 rounded-full bg-yellow-100 text-yellow-600 mr-4">
+                <i class="fas fa-plane text-xl"></i> <!-- Icône pour les voyages -->
+              </div>
+              <div>
+                <p class="text-gray-500">Voyages</p>
+                <h3 class="text-2xl font-bold">{{ totalVoyages }}</h3>
+              </div>
+            </div>
+          </div>
+          <!-- Carte KPI : Revenus -->
+          <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+              <div class="p-3 rounded-full bg-emerald-100 text-emerald-600 mr-4">
+                <i class="fas fa-dollar-sign text-xl"></i> <!-- Icône pour les revenus -->
+              </div>
+              <div>
+                <p class="text-gray-500">Revenus</p>
+                <!--
+                  {{ totalRevenus | number:'1.0-0' }} FCFA:
+                  - 'totalRevenus': Valeur brute du revenu.
+                  - '| number':'1.0-0': Pipe Angular 'number'. Formate le nombre :
+                    - '1.0-0': Au moins 1 chiffre avant la virgule, 0 chiffre après la virgule (arrondi à l'entier).
+                  - 'FCFA': Suffixe ajouté après le nombre formaté.
+                -->
+                <h3 class="text-2xl font-bold">{{ totalRevenus | number:'1.0-0' }} FCFA</h3>
+              </div>
+            </div>
+          </div>
+        </div> <!-- Fin de la grille des KPIs -->
+
+        <!-- Grille pour les graphiques (Réservations par mois et Top destinations) -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <!-- Graphique : Réservations par mois -->
+          <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold mb-4">Réservations par mois</h3>
+            <!--
+              Conteneur pour le graphique Chart.js.
+              - class="chart-container h-[300px]": Définit une hauteur fixe pour le conteneur du graphique.
+                                                 La classe 'chart-container' pourrait contenir des styles supplémentaires
+                                                 pour s'assurer que le canvas s'adapte correctement.
+            -->
+            <div class="chart-container h-[300px]">
+              <!--
+                Élément <canvas> utilisé par Chart.js pour dessiner le graphique.
+                - #reservationsChartCanvas: Variable de référence de template (#). Permet d'accéder à cet élément
+                                           <canvas> depuis le code TypeScript du composant via @ViewChild.
+              -->
+              <canvas #reservationsChartCanvas></canvas>
+            </div>
+          </div>
+          <!-- Graphique : Top destinations -->
+          <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold mb-4">Top destinations</h3>
+            <div class="space-y-3"> <!-- Ajoute un espacement vertical entre les éléments enfants -->
+              <!--
+                *ngIf="topDestinations.length === 0": Affiche ce message si la liste 'topDestinations' est vide.
+              -->
+              <div *ngIf="topDestinations.length === 0" class="text-gray-500">Aucune donnée disponible.</div>
+              <!--
+                *ngFor="let dest of topDestinations": Directive structurelle Angular. Boucle sur chaque élément 'dest'
+                                                      de la liste 'topDestinations' (propriété du composant TypeScript)
+                                                      et répète le contenu de cette div pour chaque destination.
+              -->
+              <div *ngFor="let dest of topDestinations">
+                <div class="flex justify-between mb-1"> <!-- Affiche le nom de la destination et le pourcentage sur la même ligne -->
+                  <span>{{ dest.destination }}</span> <!-- Nom de la destination -->
+                  <span>{{ dest.percent }}%</span>   <!-- Pourcentage -->
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2"> <!-- Barre de progression (fond) -->
+                  <!--
+                    Barre de progression (remplissage) :
+                    - class="bg-sky-600 h-2 rounded-full": Style de la barre.
+                    - [style.width.%]="dest.percent": Liaison de style Angular. Attribue dynamiquement la largeur
+                                                      de la barre en pourcentage, basée sur la propriété 'dest.percent'.
+                  -->
+                  <div class="bg-sky-600 h-2 rounded-full" [style.width.%]="dest.percent"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div> <!-- Fin de la grille des graphiques -->
+
+        <!-- Tableau : Dernières réservations -->
+        <div class="bg-white rounded-lg shadow p-6">
+          <h3 class="text-lg font-semibold mb-4">Dernières réservations</h3>
+          <!-- 'overflow-x-auto': Permet le défilement horizontal si le tableau est trop large pour l'écran -->
+          <div class="overflow-x-auto">
+            <!--
+              Structure standard d'un tableau HTML :
+              - min-w-full: Assure que le tableau prend au moins toute la largeur disponible,
+                            ce qui active 'overflow-x-auto' si nécessaire.
+              - divide-y divide-gray-200: Ajoute des bordures horizontales entre les lignes.
+            -->
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50"> <!-- En-tête du tableau -->
+                <tr>
+                  <!--
+                    <th>: Cellules d'en-tête.
+                    - class="px-6 py-3 ...": Classes Tailwind pour le padding, l'alignement du texte,
+                                             la police, la couleur, et la transformation en majuscules.
+                  -->
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Référence
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ville de
+                    départ</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ville
+                    d'arrivée</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date de
+                    voyage</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Heure de
+                    départ</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Heure
+                    d'arrivée</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type de
+                    billet</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre de
+                    places</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prix voyage
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prix billet
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date de
+                    réservation</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200"> <!-- Corps du tableau -->
+                <!--
+                  Ligne affichée si la liste des réservations paginées est vide :
+                  - *ngIf="paginatedLatestReservationsList.length === 0": Condition d'affichage.
+                  - colspan="13": La cellule s'étend sur 13 colonnes (le nombre total de colonnes dans le tableau).
+                -->
+                <tr *ngIf="paginatedLatestReservationsList.length === 0">
+                  <td colspan="15" class="px-6 py-4 text-center text-gray-500">Aucune réservation récente.</td> <!-- Correction colspan to 15 -->
+                </tr>
+                <!--
+                  *ngFor="let resa of paginatedLatestReservationsList": Boucle sur la liste des réservations paginées.
+                                                                        Pour chaque 'resa', une nouvelle ligne <tr> est créée.
+                -->
+                <tr *ngFor="let resa of paginatedLatestReservationsList">
+                  <!--
+                    <td>: Cellules de données.
+                    - class="px-6 py-4 ...": Classes de style pour le padding, la gestion des espaces, la taille du texte, etc.
+                    - {{ resa.idReservation }}: Interpolation pour afficher les propriétés de l'objet 'resa'.
+                  -->
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ resa.idReservation }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                      <!-- L'image du client a été retirée, donc la structure est simplifiée -->
+                      <div>
+                        <div class="text-sm font-medium text-gray-900">{{ resa.clientName }}</div>
+                        <div class="text-sm text-gray-500">{{ resa.clientEmail }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ resa.departVoyage }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ resa.arriveVoyage }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ resa.dateVoyage | date:'dd/MM/yyyy' }}</td> <!-- Pipe 'date' pour formater -->
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ resa.heureDepart }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ resa.heureArrivee }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 capitalize">{{ resa.typeBilletText }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ resa.nombrePlacesReservees }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ resa.prixVoyage | number:'1.0-0' }}
+                    FCFA</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ resa.prixTypeBillet | number:'1.0-0'
+                    }} FCFA</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ resa.total | number:'1.0-0' }} FCFA
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ resa.dateReservation | date:'dd/MM/yyyy HH:mm' }}</td> <!-- Pipe 'date' avec heure -->
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <!--
+                      Badge de statut :
+                      - class="px-2 inline-flex ... rounded-full": Style du badge.
+                      - [ngClass]="resa.statusClass": Liaison de classe dynamique. La classe CSS appliquée (et donc la couleur
+                                                       du badge) dépend de la valeur de 'resa.statusClass' (ex: 'bg-green-100 text-green-800').
+                    -->
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                      [ngClass]="resa.statusClass">{{ resa.statusText }}</span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <!--
+                      Boutons d'action :
+                      - (click)="viewReservationDetails(resa.idReservation!)": Liaison d'événement. Appelle la méthode
+                                                                              'viewReservationDetails' du composant TS
+                                                                              en passant l'ID de la réservation.
+                                                                              L'opérateur '!' (non-null assertion) est utilisé
+                                                                              car on s'attend à ce que 'idReservation' soit défini ici.
+                      - *ngIf="resa.status === 'PENDING'": Affiche les boutons "Confirmer" et "Refuser" uniquement si le statut
+                                                           de la réservation est 'PENDING'.
+                    -->
+                    <button (click)="viewReservationDetails(resa.idReservation!)"
+                      class="text-sky-600 hover:text-sky-800 mr-3">Voir</button>
+                    <button *ngIf="resa.status === 'PENDING'"
+                      (click)="confirmReservation(resa.idReservation!.toString())"
+                      class="text-green-600 hover:text-green-900 mr-3">Confirmer</button>
+                    <button *ngIf="resa.status === 'PENDING'"
+                      (click)="cancelReservation(resa.idReservation!.toString())"
+                      class="text-red-600 hover:text-red-900 mr-3">Refuser</button>
+                    <!-- Le bouton "Annuler" (onDeleteReservation) semble permettre d'annuler n'importe quelle réservation listée ici. -->
+                    <button (click)="onDeleteReservation(resa.idReservation!)"
+                      class="text-red-600 hover:text-red-900">Annuler</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <!--
+            Contrôles de Pagination pour la table "Dernières réservations" :
+            - *ngIf="latestReservations.length > 0": Affiche la pagination uniquement s'il y a des réservations.
+            - class="pagination-controls ...": Classes pour le style et la disposition (flexbox).
+          -->
+          <div *ngIf="latestReservations.length > 0" class="pagination-controls mt-4 flex justify-between items-center">
+            <div>
+              <span class="text-sm text-gray-700">
+                <!-- Affichage des informations de pagination (page actuelle, total de pages, nombre total d'éléments) -->
+                Page {{ latestReservationsCurrentPage }} sur {{ totalLatestReservationPages }} (Total: {{ latestReservations.length }} réservations)
+              </span>
+            </div>
+            <div>
+              <!--
+                Bouton "Précédent" :
+                - (click)="previousLatestReservationsPage()": Appelle la méthode pour aller à la page précédente.
+                - [disabled]="latestReservationsCurrentPage === 1": Liaison de propriété. Le bouton est désactivé
+                                                                    si l'on est déjà sur la première page.
+                - class="... disabled:opacity-50": Style pour le bouton, y compris l'opacité réduite quand il est désactivé.
+              -->
+              <button (click)="previousLatestReservationsPage()" [disabled]="latestReservationsCurrentPage === 1"
+                class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-l disabled:opacity-50">
+                Préc.
+              </button>
+              <!--
+                Bouton "Suivant" :
+                - (click)="nextLatestReservationsPage()": Appelle la méthode pour aller à la page suivante.
+                - [disabled]="latestReservationsCurrentPage === totalLatestReservationPages": Désactivé si sur la dernière page.
+              -->
+              <button (click)="nextLatestReservationsPage()" [disabled]="latestReservationsCurrentPage === totalLatestReservationPages"
+                class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-r disabled:opacity-50">
+                Suiv.
+              </button>
+            </div>
+          </div>
+        </div> <!-- Fin du conteneur pour "Dernières réservations" -->
+      </div> <!-- Fin de la section "Dashboard" -->
+
+      <!--
+        SECTION: Gestion des Clients
+        - id="clients-section": Identifiant unique.
+        - [class.hidden]="currentSection !== 'clients'": Masquée si 'currentSection' n'est pas 'clients'.
+      -->
+      <div id="clients-section" class="section-content" [class.hidden]="currentSection !== 'clients'">
+        <!-- En-tête de la section : Titre et bouton "Ajouter" -->
+        <div class="flex justify-between items-center mb-6"> <!-- Layout Flexbox pour aligner le titre à gauche et le bouton à droite -->
+          <h2 class="text-2xl font-semibold">Gestion des clients</h2>
+          <!--
+            Bouton "Ajouter un client" :
+            - (click)="openAddClientModal()": Appelle la méthode 'openAddClientModal' du composant TypeScript
+                                             lors d'un clic pour ouvrir la modale d'ajout de client.
+            - class="...": Classes Tailwind pour le style du bouton (couleur, padding, coins arrondis, icône).
+          -->
+          <button (click)="openAddClientModal()"
+            class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded flex items-center">
+            <i class="fas fa-plus mr-2"></i> Ajouter un client
+          </button>
+        </div>
+
+        <!-- Conteneur principal pour le tableau des clients (carte blanche avec ombre) -->
+        <div class="bg-white rounded-lg shadow p-6">
+          <h3 class="text-lg font-semibold mb-4">Liste des Clients</h3>
+          <div class="overflow-x-auto"> <!-- Permet le défilement horizontal pour les petits écrans -->
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Téléphone
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Genre</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <!-- Message si aucun client n'est trouvé -->
+                <tr *ngIf="paginatedClientsList.length === 0">
+                  <td colspan="5" class="px-6 py-4 text-center text-gray-500">Aucun client trouvé.</td>
+                </tr>
+                <!-- Itération sur la liste des clients paginés -->
+                <tr *ngFor="let client of paginatedClientsList">
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                      <div>
+                        <!-- Affichage du prénom et nom du client -->
+                        <div class="text-sm font-medium text-gray-900">{{ client.prenomClient }} {{ client.nomClient }}
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ client.mailClient }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ client.telClient }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ client.sexeClient }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <!--
+                      Bouton "Modifier" :
+                      - (click)="openEditClientModal(client)": Ouvre la modale d'édition en passant l'objet 'client' actuel.
+                    -->
+                    <button (click)="openEditClientModal(client)"
+                      class="text-sky-600 hover:text-sky-800 mr-3 edit-client">Modifier</button>
+                    <!--
+                      Bouton "Supprimer" :
+                      - (click)="onDeleteClient(client)": Appelle la méthode de suppression en passant l'objet 'client'.
+                    -->
+                    <button (click)="onDeleteClient(client)"
+                      class="text-red-600 hover:text-red-900 delete-client">Supprimer</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <!-- Contrôles de Pagination pour la liste des Clients -->
+          <!-- S'affiche uniquement si la liste complète des clients (clientsList) n'est pas vide -->
+          <div *ngIf="clientsList.length > 0" class="pagination-controls mt-4 flex justify-between items-center">
+            <div>
+              <span class="text-sm text-gray-700">
+                Page {{ clientsCurrentPage }} sur {{ totalClientPages }} (Total: {{ clientsList.length }} clients)
+              </span>
+            </div>
+            <div>
+              <button (click)="previousClientsPage()" [disabled]="clientsCurrentPage === 1"
+                class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-l disabled:opacity-50">
+                Préc.
+              </button>
+              <button (click)="nextClientsPage()" [disabled]="clientsCurrentPage === totalClientPages"
+                class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-r disabled:opacity-50">
+                Suiv.
+              </button>
+            </div>
+          </div> <!-- Fin des contrôles de pagination pour les clients -->
+        </div> <!-- Fin du conteneur du tableau des clients -->
+      </div> <!-- Fin de la section "Gestion des Clients" -->
+
+      <!--
+        SECTION: Gestion des Agents
+        - Similaire à la section Clients, cette section gère l'affichage et les opérations CRUD pour les agents.
+        - id="agents-section"
+        - [class.hidden]="currentSection !== 'agents'"
+      -->
+      <div id="agents-section" class="section-content" [class.hidden]="currentSection !== 'agents'">
+        <!-- En-tête de la section -->
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-semibold">Gestion des agents</h2>
+          <!-- Bouton pour ouvrir la modale d'ajout d'agent -->
+          <button (click)="openAddAgentModal()"
+            class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded flex items-center">
+            <i class="fas fa-plus mr-2"></i> Ajouter un agent
+          </button>
+        </div>
+        <!-- Conteneur du tableau des agents -->
+        <div class="bg-white rounded-lg shadow p-6">
+          <h3 class="text-lg font-semibold mb-4">Liste des Agents</h3>
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Téléphone
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rôle</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <!--
+                  Message affiché en cas d'erreur lors du chargement des agents.
+                  - *ngIf="agentsLoadingError": Condition d'affichage.
+                  - {{ agentsLoadingError }}: Affiche le message d'erreur stocké dans la variable.
+                -->
+                <tr *ngIf="agentsLoadingError">
+                  <td colspan="5" class="px-6 py-4 text-center text-red-500">{{ agentsLoadingError }}</td>
+                </tr>
+                <!--
+                  Message si aucun agent n'est trouvé (et qu'il n'y a pas eu d'erreur de chargement).
+                  - *ngIf="!agentsLoadingError && paginatedAgentsList.length === 0"
+                -->
+                <tr *ngIf="!agentsLoadingError && paginatedAgentsList.length === 0">
+                  <td colspan="5" class="px-6 py-4 text-center text-gray-500">Aucun agent trouvé.</td>
+                </tr>
+                <!--
+                  Conteneur pour les lignes d'agents. Utilisé avec *ngIf pour s'assurer que la boucle *ngFor
+                  ne s'exécute que si les données sont prêtes et qu'il n'y a pas d'erreur.
+                  - *ngIf="!agentsLoadingError && paginatedAgentsList.length > 0"
+                -->
+                <ng-container *ngIf="!agentsLoadingError && paginatedAgentsList.length > 0">
+                  <!-- Itération sur la liste des agents paginés -->
+                  <tr *ngFor="let agent of paginatedAgentsList">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="flex items-center">
+                        <!-- Espace réservé pour une image d'agent, actuellement commenté -->
+                        <!-- <div class="flex-shrink-0 h-10 w-10"><img class="h-10 w-10 rounded-full" [src]="agent.avatarUrl || 'https://via.placeholder.com/40'" alt=""></div> -->
+                        <div class="ml-4"> <!-- 'ml-4' était commenté comme "Adjusted margin if no image", mais il est toujours là. Si pas d'image, ml-0 serait plus approprié. -->
+                          <div class="text-sm font-medium text-gray-900">{{ agent.prenomAgent }} {{ agent.nomAgent }}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ agent.mailAgent }}</td>
+                    <!-- Affiche 'N/A' si le numéro de téléphone n'est pas disponible -->
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ agent.telAgent || 'N/A' }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ agent.role }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <!-- Boutons d'action pour modifier et supprimer un agent -->
+                      <button (click)="openEditAgentModal(agent)"
+                        class="text-sky-600 hover:text-sky-800 mr-3">Modifier</button>
+                      <button (click)="onDeleteAgent(agent)" class="text-red-600 hover:text-red-900">Supprimer</button>
+                    </td>
+                  </tr>
+                </ng-container>
+              </tbody>
+            </table>
+          </div>
+           <!-- Contrôles de Pagination pour la liste des Agents -->
+           <div *ngIf="agentsList.length > 0" class="pagination-controls mt-4 flex justify-between items-center">
+            <div>
+              <span class="text-sm text-gray-700">
+                Page {{ agentsCurrentPage }} sur {{ totalAgentPages }} (Total: {{ agentsList.length }} agents)
+              </span>
+            </div>
+            <div>
+              <button (click)="previousAgentsPage()" [disabled]="agentsCurrentPage === 1"
+                class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-l disabled:opacity-50">
+                Préc.
+              </button>
+              <button (click)="nextAgentsPage()" [disabled]="agentsCurrentPage === totalAgentPages"
+                class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-r disabled:opacity-50">
+                Suiv.
+              </button>
+            </div>
+          </div> <!-- Fin des contrôles de pagination pour les agents -->
+        </div> <!-- Fin du conteneur du tableau des agents -->
+      </div> <!-- Fin de la section "Gestion des Agents" -->
+
+      <!--
+        SECTION: Gestion des Voyages
+        - id="voyages-section"
+        - [class.hidden]="currentSection !== 'voyages'"
+      -->
+      <div id="voyages-section" class="section-content" [class.hidden]="currentSection !== 'voyages'">
+        <!-- En-tête de la section -->
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-semibold">Gestion des voyages</h2>
+          <!-- Bouton pour ouvrir la modale d'ajout de voyage -->
+          <button (click)="openAddVoyageModal()"
+            class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded flex items-center">
+            <i class="fas fa-plus mr-2"></i> Ajouter un voyage
+          </button>
+        </div>
+        <!-- Conteneur du tableau des voyages -->
+        <div class="bg-white rounded-lg shadow p-6">
+          <h3 class="text-lg font-semibold mb-4">Liste des Voyages</h3>
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Départ</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Arrivée
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Voyage
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prix</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Places
+                    Disp.</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <!--
+                  Message si aucun voyage n'est trouvé.
+                  - *ngIf="!paginatedVoyagesList || paginatedVoyagesList.length === 0":
+                    S'affiche si 'paginatedVoyagesList' est non défini, null, ou vide.
+                -->
+                <tr *ngIf="!paginatedVoyagesList || paginatedVoyagesList.length === 0">
+                  <td colspan="6" class="px-6 py-4 text-center text-gray-500">Aucun voyage trouvé.</td>
+                </tr>
+                <!-- Itération sur la liste des voyages paginés -->
+                <tr *ngFor="let voyage of paginatedVoyagesList">
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ voyage.departVoyage }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ voyage.arriveVoyage }}</td>
+                  <!--
+                    Utilisation du pipe 'date' pour formater la date du voyage au format 'jour/mois/année'.
+                    - {{ voyage.dateVoyage | date:'dd/MM/yyyy' }}
+                  -->
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ voyage.dateVoyage | date:'dd/MM/yyyy'
+                    }}</td>
+                  <!--
+                    Utilisation du pipe 'currency' pour formater le prix.
+                    - 'FCFA': Code de la devise.
+                    - 'symbol': Affiche le symbole de la devise (FCFA).
+                    - '1.0-0': Format du nombre (au moins 1 chiffre avant la virgule, 0 après).
+                    - {{ voyage.prix | currency:'FCFA':'symbol':'1.0-0' }}
+                  -->
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ voyage.prix |
+                    currency:'FCFA':'symbol':'1.0-0' }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ voyage.placesDisponibles }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <!-- Boutons d'action pour modifier et supprimer un voyage -->
+                    <button (click)="openEditVoyageModal(voyage)"
+                      class="text-sky-600 hover:text-sky-800 mr-3">Modifier</button>
+                    <button (click)="onDeleteVoyage(voyage)" class="text-red-600 hover:text-red-900">Supprimer</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <!-- Contrôles de Pagination pour la liste des Voyages -->
+          <div *ngIf="voyagesList.length > 0" class="pagination-controls mt-4 flex justify-between items-center">
+            <div>
+              <span class="text-sm text-gray-700">
+                Page {{ voyagesCurrentPage }} sur {{ totalVoyagePages }} (Total: {{ voyagesList.length }} voyages)
+              </span>
+            </div>
+            <div>
+              <button (click)="previousVoyagesPage()" [disabled]="voyagesCurrentPage === 1"
+                class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-l disabled:opacity-50">
+                Préc.
+              </button>
+              <button (click)="nextVoyagesPage()" [disabled]="voyagesCurrentPage === totalVoyagePages"
+                class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-r disabled:opacity-50">
+                Suiv.
+              </button>
+            </div>
+          </div> <!-- Fin des contrôles de pagination pour les voyages -->
+        </div> <!-- Fin du conteneur du tableau des voyages -->
+      </div> <!-- Fin de la section "Gestion des Voyages" -->
+
+      <!--
+        SECTION: Gestion des Types de Billets
+        - id="billets-section": L'ID utilise "billets" tandis que le titre utilise "Types de billets".
+        - [class.hidden]="currentSection !== 'billets'"
+      -->
+      <div id="billets-section" class="section-content" [class.hidden]="currentSection !== 'billets'">
+        <!-- En-tête de la section -->
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-semibold">Types de billets</h2>
+          <!-- Bouton pour ouvrir la modale d'ajout de type de billet -->
+          <button (click)="openAddTypeBilletModal()"
+            class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded flex items-center">
+            <i class="fas fa-plus mr-2"></i> Ajouter un type
+          </button>
+        </div>
+        <!-- Conteneur du tableau des types de billets -->
+        <div class="bg-white rounded-lg shadow p-6">
+          <h3 class="text-lg font-semibold mb-4">Liste des Types de Billets</h3>
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Libellé
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prix</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <!-- Message si aucun type de billet n'est trouvé -->
+                <tr *ngIf="!paginatedTypesBilletList || paginatedTypesBilletList.length === 0">
+                  <td colspan="4" class="px-6 py-4 text-center text-gray-500">Aucun type de billet trouvé.</td>
+                </tr>
+                <!-- Itération sur la liste des types de billets paginés -->
+                <tr *ngFor="let billet of paginatedTypesBilletList">
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ billet.idTypeBillet }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ billet.libelleTypeBillet }}</td>
+                  <!-- Affichage du prix formaté avec le pipe 'currency' -->
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ billet.prixTypeBillet |
+                    currency:'FCFA':'symbol':'1.0-0' }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <!-- Boutons d'action pour modifier et supprimer un type de billet -->
+                    <button (click)="openEditTypeBilletModal(billet)"
+                      class="text-sky-600 hover:text-sky-800 mr-3">Modifier</button>
+                    <button (click)="onDeleteTypeBillet(billet)"
+                      class="text-red-600 hover:text-red-900">Supprimer</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <!-- Contrôles de Pagination pour la liste des Types de Billet -->
+          <div *ngIf="typesBilletList.length > 0" class="pagination-controls mt-4 flex justify-between items-center">
+            <div>
+              <span class="text-sm text-gray-700">
+                Page {{ typesBilletCurrentPage }} sur {{ totalTypeBilletPages }} (Total: {{ typesBilletList.length }} types)
+              </span>
+            </div>
+            <div>
+              <button (click)="previousTypesBilletPage()" [disabled]="typesBilletCurrentPage === 1"
+                class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-l disabled:opacity-50">
+                Préc.
+              </button>
+              <button (click)="nextTypesBilletPage()" [disabled]="typesBilletCurrentPage === totalTypeBilletPages"
+                class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-r disabled:opacity-50">
+                Suiv.
+              </button>
+            </div>
+          </div> <!-- Fin des contrôles de pagination pour les types de billets -->
+        </div> <!-- Fin du conteneur du tableau des types de billets -->
+      </div> <!-- Fin de la section "Gestion des Types de Billets" -->
+
+      <!--
+        SECTION: Gestion des Réservations (Liste principale)
+        - id="reservations-section"
+        - [class.hidden]="currentSection !== 'reservations'"
+      -->
+      <div id="reservations-section" class="section-content" [class.hidden]="currentSection !== 'reservations'">
+        <!-- En-tête de la section -->
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-semibold">Gestion des réservations</h2>
+          <!-- Bouton pour ouvrir la modale d'ajout de réservation -->
+          <button (click)="openAddReservationModal()"
+            class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded flex items-center">
+            <i class="fas fa-plus mr-2"></i> Ajouter une réservation
+          </button>
+        </div>
+        <!-- Conteneur du tableau des réservations -->
+        <div class="bg-white rounded-lg shadow p-6">
+          <h3 class="text-lg font-semibold mb-4">Liste des Réservations</h3>
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID Res.
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Rés.
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Voyage
+                    (Départ - Arrivée)</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Voyage
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type Billet
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prix voyage
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prix billet
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <!-- Message si aucune réservation n'est trouvée -->
+                <tr *ngIf="!paginatedReservationsList || paginatedReservationsList.length === 0">
+                  <td colspan="10" class="px-6 py-4 text-center text-gray-500">Aucune réservation trouvée.</td>
+                </tr>
+                <!-- Itération sur la liste des réservations paginées -->
+                <tr *ngFor="let reservation of paginatedReservationsList">
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ reservation.idReservation }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ reservation.dateReservation |
+                    date:'dd/MM/yyyy' }}</td> <!-- Pipe date -->
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <!--
+                      Affichage des informations du client lié à la réservation.
+                      Utilisation de l'opérateur de navigation optionnelle (?.) pour éviter les erreurs si 'client' est null/undefined.
+                      Utilisation de l'opérateur OR (||) pour afficher 'N/A' si le nom du client est manquant.
+                    -->
+                    {{ reservation.client?.prenomClient }} {{ reservation.client?.nomClient || 'N/A' }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {{ reservation.voyage?.departVoyage || 'N/A' }} - {{ reservation.voyage?.arriveVoyage || 'N/A' }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {{ reservation.voyage?.dateVoyage | date:'dd/MM/yyyy' }} <!-- Pipe date -->
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{
+                    reservation.typeBillet?.libelleTypeBillet || 'N/A' }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ reservation.voyage?.prix || 0 |
+                    number:'1.0-0' }} FCFA</td> <!-- Pipe number et devise -->
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{
+                    reservation.typeBillet?.prixTypeBillet || 0 | number:'1.0-0' }} FCFA</td> <!-- Pipe number et devise -->
+                  <!--
+                    Calcul et affichage du total directement dans le template.
+                    ((prix du voyage ou 0) + (prix du type de billet ou 0)) * (nombre de places réservées ou 0)
+                    Ensuite formaté avec le pipe 'number' et la devise.
+                  -->
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ ((reservation.voyage?.prix || 0) +
+                    (reservation.typeBillet?.prixTypeBillet || 0)) * (reservation.nombrePlacesReservees || 0) |
+                    number:'1.0-0' }} FCFA</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <!--
+                      Boutons d'action conditionnels : "Confirmer" et "Refuser".
+                      - *ngIf="reservation.status === 'PENDING'": Ces boutons ne s'affichent que si le statut
+                                                                  de la réservation est 'PENDING'.
+                      - (click)="confirmReservation(...)" et (click)="cancelReservation(...)" appellent les méthodes
+                        correspondantes dans le composant TypeScript.
+                    -->
+                    <button *ngIf="reservation.status === 'PENDING'"
+                      (click)="confirmReservation(reservation.idReservation!.toString())"
+                      class="text-green-600 hover:text-green-900 mr-3">Confirmer</button>
+                    <button *ngIf="reservation.status === 'PENDING'"
+                      (click)="cancelReservation(reservation.idReservation!.toString())"
+                      class="text-red-600 hover:text-red-900 mr-3">Refuser</button>
+                    <!-- Message si aucune action n'est disponible (statut non 'PENDING') -->
+                    <span *ngIf="reservation.status !== 'PENDING'" class="text-gray-400 italic">Aucune action</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <!-- Contrôles de Pagination pour la liste des Réservations -->
+          <div *ngIf="reservationsList.length > 0" class="pagination-controls mt-4 flex justify-between items-center">
+            <div>
+              <span class="text-sm text-gray-700">
+                Page {{ reservationsCurrentPage }} sur {{ totalReservationPages }} (Total: {{ reservationsList.length }} réservations)
+              </span>
+            </div>
+            <div>
+              <button (click)="previousReservationsPage()" [disabled]="reservationsCurrentPage === 1"
+                class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-l disabled:opacity-50">
+                Préc.
+              </button>
+              <button (click)="nextReservationsPage()" [disabled]="reservationsCurrentPage === totalReservationPages"
+                class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-r disabled:opacity-50">
+                Suiv.
+              </button>
+            </div>
+          </div> <!-- Fin des contrôles de pagination pour les réservations -->
+        </div> <!-- Fin du conteneur du tableau des réservations -->
+      </div> <!-- Fin de la section "Gestion des Réservations" -->
+
+      <!--
+        SECTION: Gestion des Paiements
+        - id="paiements-section"
+        - [class.hidden]="currentSection !== 'paiements'"
+      -->
+      <div id="paiements-section" class="section-content" [class.hidden]="currentSection !== 'paiements'">
+        <!-- En-tête de la section -->
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-semibold">Gestion des paiements</h2>
+          <!-- Bouton pour ouvrir la modale d'ajout de paiement -->
+          <button (click)="openAddPaiementModal()"
+            class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded flex items-center">
+            <i class="fas fa-plus mr-2"></i> Ajouter un paiement
+          </button>
+        </div>
+        <!-- Conteneur du tableau des paiements -->
+        <div class="bg-white rounded-lg shadow p-6">
+          <h3 class="text-lg font-semibold mb-4">Liste des Paiements</h3>
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code
+                    Paiement</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date
+                    Paiement</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Réservation
+                    (ID)</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Agent</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <!-- Message si aucun paiement n'est trouvé -->
+                <tr *ngIf="!paginatedPaiementsList || paginatedPaiementsList.length === 0">
+                  <td colspan="5" class="px-6 py-4 text-center text-gray-500">Aucun paiement trouvé.</td>
+                </tr>
+                <!-- Itération sur la liste des paiements paginés -->
+                <tr *ngFor="let paiement of paginatedPaiementsList">
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ paiement.codePaiement }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ paiement.datePaiement |
+                    date:'dd/MM/yyyy' }}</td> <!-- Pipe date -->
+                  <!-- Affichage de l'ID de la réservation liée, avec gestion du cas où 'reservation' serait null -->
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ paiement.reservation?.idReservation
+                    || 'N/A' }}</td>
+                  <!-- Affichage du nom de l'agent lié, avec gestion du cas où 'agent' serait null -->
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ paiement.agent?.prenomAgent }} {{
+                    paiement.agent?.nomAgent || 'N/A' }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <!--
+                      Actions pour les paiements :
+                      Les boutons pour "Modifier" et "Supprimer" sont actuellement commentés dans le code original.
+                      Cela indique que ces fonctionnalités pourraient ne pas être encore implémentées ou
+                      sont en cours de développement. Un message "Actions à impl." est affiché à la place.
+                    -->
+                    <!-- <button (click)="openEditPaiementModal(paiement)" class="text-sky-600 hover:text-sky-800 mr-3">Modifier</button> -->
+                    <!-- <button (click)="onDeletePaiement(paiement)" class="text-red-600 hover:text-red-900">Supprimer</button> -->
+                    <span class="text-gray-400 italic">Actions à impl.</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <!-- Contrôles de Pagination pour la liste des Paiements -->
+          <div *ngIf="paiementsList.length > 0" class="pagination-controls mt-4 flex justify-between items-center">
+            <div>
+              <span class="text-sm text-gray-700">
+                Page {{ paiementsCurrentPage }} sur {{ totalPaiementPages }} (Total: {{ paiementsList.length }} paiements)
+              </span>
+            </div>
+            <div>
+              <button (click)="previousPaiementsPage()" [disabled]="paiementsCurrentPage === 1"
+                class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-l disabled:opacity-50">
+                Préc.
+              </button>
+              <button (click)="nextPaiementsPage()" [disabled]="paiementsCurrentPage === totalPaiementPages"
+                class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-r disabled:opacity-50">
+                Suiv.
+              </button>
+            </div>
+          </div> <!-- Fin des contrôles de pagination pour les paiements -->
+        </div> <!-- Fin du conteneur du tableau des paiements -->
+      </div> <!-- Fin de la section "Gestion des Paiements" -->
+    </main>
+
+    <!--
+      SECTION: Modales
+      Cette section contient les déclarations de tous les composants modaux utilisés dans le tableau de bord.
+      Chaque modale est un composant Angular distinct avec ses propres template et logique.
+      Elles sont généralement masquées par défaut et leur visibilité est contrôlée par la propriété [isOpen]
+      qui est liée à une variable booléenne dans le composant AdminDashboardPageComponent (TypeScript).
+      Les modales communiquent avec le composant parent via des événements de sortie (Output).
+    -->
+
+    <!--
+      Modale pour Ajouter/Modifier un Client : <app-add-client-modal>
+      - [isOpen]="isAddClientModalOpen": Lie la visibilité de la modale à la variable 'isAddClientModalOpen'.
+                                         Lorsque 'isAddClientModalOpen' est true, la modale s'affiche.
+      - [clientToEdit]="clientToEdit": Passe l'objet 'clientToEdit' (qui peut être null pour un ajout,
+                                       ou un ClientDTO pour une modification) à la modale.
+                                       La modale utilise cet Input pour pré-remplir ses champs si c'est une édition.
+      - (closeModal)="closeClientModal()": Événement émis par la modale lorsqu'elle doit être fermée (ex: clic sur
+                                           le bouton "Fermer" ou l'icône "x"). Lié à la méthode 'closeClientModal()'
+                                           du composant parent pour mettre à jour 'isAddClientModalOpen'.
+      - (saveClient)="handleSaveClient($event)": Événement émis lorsque l'utilisateur soumet le formulaire de la modale.
+                                                 Lié à 'handleSaveClient()'. L'$event contient les données du client
+                                                 saisies ou modifiées.
+    -->
+    <app-add-client-modal [isOpen]="isAddClientModalOpen" [clientToEdit]="clientToEdit"
+      (closeModal)="closeClientModal()" (saveClient)="handleSaveClient($event)">
+    </app-add-client-modal>
+
+    <!-- Modale pour Ajouter/Modifier un Agent : <app-add-agent-modal> -->
+    <!-- Les liaisons [isOpen], [agentToEdit], (closeModal), et (saveAgent) fonctionnent sur le même principe
+         que pour la modale client, mais avec des données et des méthodes spécifiques aux agents. -->
+    <app-add-agent-modal [isOpen]="isAddAgentModalOpen" [agentToEdit]="agentToEdit" (closeModal)="closeAgentModal()"
+      (saveAgent)="handleSaveAgent($event)">
+    </app-add-agent-modal>
+
+    <!-- Modale pour Ajouter/Modifier un Voyage : <app-add-voyage-modal> -->
+    <app-add-voyage-modal [isOpen]="isAddVoyageModalOpen" [voyageToEdit]="voyageToEdit"
+      (closeModal)="closeVoyageModal()" (saveVoyage)="handleSaveVoyage($event)">
+    </app-add-voyage-modal>
+
+    <!-- Modale pour Ajouter/Modifier un Type de Billet : <app-add-type-billet-modal> -->
+    <app-add-type-billet-modal [isOpen]="isAddTypeBilletModalOpen" [typeBilletToEdit]="typeBilletToEdit"
+      (closeModal)="closeTypeBilletModal()" (saveTypeBillet)="handleSaveTypeBillet($event)">
+    </app-add-type-billet-modal>
+
+    <!--
+      Modale pour Ajouter/Modifier une Réservation : <app-add-reservation-modal>
+      - [availableClients], [availableVoyages], [availableBillets]: Inputs supplémentaires pour passer
+        les listes de clients, voyages, et types de billets existants à la modale.
+        Ces listes sont utilisées pour peupler des sélecteurs (dropdowns) dans le formulaire de la modale,
+        permettant à l'utilisateur de lier la réservation à des entités existantes.
+    -->
+    <app-add-reservation-modal [isOpen]="isAddReservationModalOpen" [reservationToEdit]="reservationToEdit"
+      [availableClients]="sampleClientsForModal" [availableVoyages]="sampleVoyagesForModal"
+      [availableBillets]="sampleBilletsForModal" (closeModal)="closeReservationModal()"
+      (saveReservation)="handleSaveReservation($event)">
+    </app-add-reservation-modal>
+
+    <!--
+      Modale pour Ajouter/Modifier un Paiement : <app-add-paiement-modal>
+      - [availableReservations], [availableAgents]: Inputs pour les listes de réservations et agents existants,
+        utilisés pour les sélecteurs dans la modale de paiement.
+    -->
+    <app-add-paiement-modal [isOpen]="isAddPaiementModalOpen" [paiementToEdit]="paiementToEdit"
+      [availableReservations]="sampleReservationsForModal" [availableAgents]="sampleAgentsForModal"
+      (closeModal)="closePaiementModal()" (savePaiement)="handleSavePaiement($event)">
+    </app-add-paiement-modal>
+
+    <!--
+      Modale de Confirmation de Suppression : <app-delete-confirmation-modal>
+      - [isOpen]="isDeleteModalOpen": Contrôle la visibilité de la modale de suppression.
+      - [itemName]="itemToDeleteName": Input pour passer le nom ou une description de l'élément
+                                       à supprimer, afin de l'afficher dans le message de confirmation
+                                       (ex: "Êtes-vous sûr de vouloir supprimer 'Client Dupont' ?").
+      - (closeModal)="closeDeleteModal()": Gère la fermeture de la modale (si l'utilisateur annule).
+      - (confirmDelete)="handleConfirmDelete()": Événement émis si l'utilisateur confirme la suppression.
+                                                 Lié à la méthode 'handleConfirmDelete()' du parent,
+                                                 qui exécutera alors l'action de suppression spécifique.
+    -->
+    <app-delete-confirmation-modal [isOpen]="isDeleteModalOpen" [itemName]="itemToDeleteName"
+      (closeModal)="closeDeleteModal()" (confirmDelete)="handleConfirmDelete()">
+    </app-delete-confirmation-modal>
+
+  </div> <!-- Fin de #mainContent -->
+</div> <!-- Fin du conteneur flex principal -->

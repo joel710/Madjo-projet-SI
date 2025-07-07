@@ -1,0 +1,22 @@
+/* app.css (ou app.component.css) */
+/* Ce fichier est destiné à contenir les styles CSS spécifiques au composant AppComponent. */
+/* Les styles définis ici sont généralement "encapsulés", ce qui signifie qu'ils */
+/* ne s'appliquent qu'au template de AppComponent (app.html) et n'affectent pas */
+/* les autres composants de l'application, sauf si des techniques spéciales sont utilisées. */
+
+/* Ce fichier est actuellement vide. Cela peut être intentionnel si : */
+/* 1. AppComponent n'a pas besoin de styles spécifiques. */
+/* 2. Les styles sont gérés globalement (par exemple, dans styles.css à la racine du projet). */
+/* 3. Un framework CSS comme Tailwind CSS est utilisé et gère la majorité du style via des classes utilitaires. */
+
+/* Si AppComponent avait besoin de styles, on pourrait les ajouter ici. Par exemple : */
+/*
+:host {
+  display: block; // Rendre app-root comme un élément de type bloc.
+  font-family: sans-serif; // Définir une police par défaut pour l'application.
+}
+
+h1 {
+  color: navy; // Un style spécifique pour les h1 dans le template de AppComponent.
+}
+*/

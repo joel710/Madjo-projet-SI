@@ -1,0 +1,79 @@
+/*
+  @author VotreNomOuPseudo
+  @date YYYY-MM-DD
+  @description Fichier CSS spécifique au composant AdminSidebarComponent.
+               Ce fichier est destiné à contenir des styles spécifiques à la barre latérale
+               qui ne seraient pas gérés directement par les classes Tailwind CSS dans le template HTML
+               ou par des liaisons de classes dynamiques Angular.
+
+               Actuellement, la plupart des aspects stylistiques, y compris les états
+               réduit/étendu et les adaptations mobiles, sont principalement gérés via :
+               1. Les classes utilitaires Tailwind CSS directement dans `admin-sidebar.html`.
+               2. Les liaisons de classes conditionnelles d'Angular (ex: `[class.hidden]`, `[class.sidebar-collapsed]`)
+                  dans le template, basées sur l'état du composant (ex: `isCollapsed`).
+               3. La logique du composant parent (AdminDashboardPageComponent) pour les états globaux comme la vue mobile.
+
+               Les sections commentées ci-dessous sont des vestiges d'une approche stylistique antérieure
+               ou des considérations pour des adaptations mobiles qui seraient gérées à un niveau supérieur.
+*/
+
+/* Les styles de base sont définis via Tailwind dans admin-sidebar.component.html */
+/* Styles spécifiques pour l'état réduit si non complètement gérés par les classes Tailwind */
+
+/*
+  Masquage du texte en mode réduit :
+  Ceci est maintenant géré directement dans le template HTML (`admin-sidebar.html`)
+  en utilisant la liaison `[class.hidden]="isCollapsed"` sur les éléments textuels.
+*/
+/* .sidebar-collapsed .nav-text, */
+/* .sidebar-collapsed .logo-text { */
+/* display: none; */
+/* } */
+
+/*
+  Affichage de l'icône du logo en mode réduit :
+  Ceci est également géré dans le template HTML via `[class.hidden]="!isCollapsed"`.
+*/
+/* .sidebar-collapsed .logo-icon { */
+/* display: block !important; */ /* Ensure this is handled or not needed */
+/* } */
+
+/*
+  La logique principale de largeur/largeur minimale et de transition est gérée
+  par les classes Tailwind dans le HTML et les classes conditionnelles appliquées par Angular
+  en fonction de l'état `isCollapsed`.
+*/
+/* The main width/min-width and transition logic will be primarily managed by Tailwind classes in the HTML */
+/* and conditional classes applied by Angular based on isCollapsed state. */
+
+/*
+  Adaptations pour mobile :
+  Ces adaptations sont gérées par le composant parent (AdminDashboardPageComponent)
+  et son interaction avec ce composant sidebar (par exemple, en basculant une classe pour la vue mobile).
+  Les styles CSS originaux pour mobile (commentés ci-dessous) montraient une approche où la sidebar
+  aurait une position `fixed` et serait déplacée hors de l'écran (left: -250px), puis ramenée
+  avec une classe 'active'. Dans l'implémentation actuelle, cette gestion est déléguée
+  au composant parent pour une meilleure coordination globale de l'affichage en mode mobile.
+*/
+/* Mobile adaptations will be handled by the parent component (AdminDashboardPage)
+   and its interaction with this sidebar component (e.g., toggling a class for mobile view)
+   The original CSS had specific styles for mobile:
+    @media (max-width: 768px) {
+        #sidebar {
+            position: fixed;
+            left: -250px; // This will be controlled by parent component state
+            height: 100%;
+            transition: left 0.3s ease;
+            z-index: 1000; // Ensure this is appropriately set
+        }
+        #sidebar.active { // 'active' class for mobile open state
+            left: 0;
+            width: 250px;
+        }
+        .sidebar-collapsed { // This might need adjustment for mobile
+            left: -80px;
+        }
+    }
+   For now, we focus on the desktop collapsed/expanded state within this component.
+   Mobile state will be an Input property or managed by a service/parent.
+*/

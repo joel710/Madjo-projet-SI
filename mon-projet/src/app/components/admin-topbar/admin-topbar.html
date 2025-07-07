@@ -1,0 +1,114 @@
+<!--
+  @author VotreNomOuPseudo
+  @date YYYY-MM-DD
+  @description Template HTML pour le composant AdminTopbarComponent.
+               Ce template définit la structure visuelle de la barre supérieure de l'interface d'administration.
+               Il comprend le bouton pour le menu mobile, le titre de la page, un menu de notifications
+               et un menu utilisateur.
+-->
+<header class="bg-white shadow-sm py-4 px-6 flex items-center justify-between sticky top-0 z-50">
+  <!-- Section gauche de la topbar : Bouton menu mobile et Titre de la page -->
+  <div class="flex items-center">
+    <!--
+      Bouton pour basculer la sidebar en mode mobile :
+      - id="mobileToggle": Identifiant unique.
+      - (click)="mobileToggleClicked.emit()": Émet l'événement 'mobileToggleClicked' (défini dans le .ts)
+                                             lors d'un clic. Le composant parent écoute cet événement.
+      - class="... md:hidden": Classes Tailwind. 'md:hidden' masque ce bouton sur les écrans de taille moyenne et plus (visible uniquement sur mobile).
+    -->
+    <button id="mobileToggle" (click)="mobileToggleClicked.emit()" class="mr-4 text-gray-600 focus:outline-none md:hidden">
+      <i class="fas fa-bars"></i> <!-- Icône "burger" -->
+    </button>
+    <!--
+      Titre de la page :
+      - {{ pageTitle }}: Interpolation Angular. Affiche la valeur de la propriété 'pageTitle'
+                         (fournie en @Input par le composant parent).
+    -->
+    <h1 class="text-xl font-semibold text-gray-800">{{ pageTitle }}</h1>
+  </div>
+
+  <!-- Section droite de la topbar : Notifications et Menu Utilisateur -->
+  <div class="flex items-center space-x-4"> <!-- 'space-x-4' ajoute un espacement horizontal entre les enfants -->
+
+    <!-- Section des Notifications -->
+    <div class="relative"> <!-- 'relative' pour positionner le menu déroulant par rapport à ce conteneur -->
+      <!--
+        Bouton pour ouvrir/fermer le menu des notifications :
+        - (click)="toggleNotifications()": Appelle la méthode 'toggleNotifications' du composant .ts.
+        - class="notifications-trigger": Classe ajoutée pour faciliter la détection de clics en dehors (voir HostListener dans le .ts).
+      -->
+      <button (click)="toggleNotifications()" class="text-gray-600 focus:outline-none notifications-trigger">
+        <i class="fas fa-bell"></i> <!-- Icône de cloche -->
+        <!--
+          Badge de notification :
+          - *ngIf="hasNotifications": S'affiche uniquement si la propriété 'hasNotifications' (dans le .ts) est vraie.
+          - class="absolute top-0 right-0 ...": Positionne le petit cercle rouge au-dessus de l'icône de cloche.
+        -->
+        <span *ngIf="hasNotifications" class="absolute top-0 right-0 h-2 w-2 rounded-full bg-red-500"></span>
+      </button>
+      <!--
+        Menu déroulant des Notifications :
+        - *ngIf="notificationsOpen": S'affiche uniquement si 'notificationsOpen' (dans le .ts) est vraie.
+        - class="absolute right-0 mt-2 ... notifications-dropdown": Positionnement et style du menu.
+                                                               'notifications-dropdown' est ajoutée pour le HostListener.
+      -->
+      <div *ngIf="notificationsOpen" class="absolute right-0 mt-2 w-64 bg-white rounded-md shadow-lg py-1 z-50 border notifications-dropdown">
+        <div class="px-4 py-2 text-sm text-gray-700 font-semibold border-b">Notifications</div>
+        <div class="max-h-48 overflow-y-auto"> <!-- Permet le défilement si beaucoup de notifications -->
+          <!--
+            Itération sur la liste des notifications :
+            - *ngFor="let notification of notifications": Boucle sur le tableau 'notifications' du .ts.
+          -->
+          <a *ngFor="let notification of notifications" href="#" class="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-100">{{ notification }}</a>
+          <!-- Message si aucune notification -->
+          <p *ngIf="notifications.length === 0" class="px-4 py-2 text-sm text-gray-500">Aucune nouvelle notification</p> <!-- Correction: No new notifications -> Aucune nouvelle notification -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Section Utilisateur (Nom, Rôle et Menu déroulant) -->
+    <div class="flex items-center">
+      <!--
+        Affichage du nom et du rôle de l'utilisateur :
+        - class="... hidden md:block cursor-pointer user-menu-trigger":
+          - 'hidden md:block': Masqué sur mobile, visible à partir de la taille d'écran 'md'.
+          - 'cursor-pointer': Change le curseur pour indiquer que c'est cliquable.
+          - 'user-menu-trigger': Classe ajoutée pour le HostListener.
+        - (click)="toggleUserMenu()": Ouvre/ferme le menu déroulant utilisateur.
+      -->
+      <div class="mr-3 text-right hidden md:block cursor-pointer user-menu-trigger" (click)="toggleUserMenu()">
+        <p class="text-sm font-medium text-gray-700">{{ userName }}</p>
+        <p class="text-xs text-gray-500">{{ userRole }}</p>
+      </div>
+      <!--
+        Conteneur pour l'image (précédemment) et le menu déroulant.
+        'relative' pour positionner le menu déroulant.
+        Note: L'image utilisateur a été retirée du visuel direct dans des modifications précédentes,
+        mais la structure 'relative' est conservée pour le positionnement du menu.
+        Un bouton/icône pourrait être ajouté ici pour déclencher le menu sur mobile si le nom/rôle est masqué.
+      -->
+      <div class="relative">
+        <!-- L'image de l'utilisateur était ici. Si réintroduite, elle pourrait aussi avoir la classe 'user-menu-trigger'
+             ou être englobée par un élément ayant cette classe pour fonctionner avec le HostListener.
+             Exemple: <img (click)="toggleUserMenu()" class="user-menu-trigger ...">
+        -->
+        <!--
+          Menu déroulant Utilisateur :
+          - *ngIf="userMenuOpen": S'affiche si 'userMenuOpen' est vraie.
+          - class="absolute right-0 mt-2 ... user-menu-dropdown": Positionnement et style.
+                                                               'user-menu-dropdown' ajoutée pour HostListener.
+        -->
+        <div *ngIf="userMenuOpen" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border user-menu-dropdown">
+          <!--
+            Liens de navigation dans le menu déroulant :
+            - routerLink="/admin/profile": Directive Angular pour naviguer vers la route spécifiée.
+            - class="block px-4 py-2 ...": Style des liens.
+          -->
+          <a routerLink="/admin/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profil</a>
+          <a routerLink="/admin/settings" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Paramètres</a>
+          <a routerLink="/logout" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 border-t border-gray-100">Déconnexion</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>

@@ -1,0 +1,108 @@
+<!--
+  @author VotreNomOuPseudo
+  @date YYYY-MM-DD
+  @description Template HTML pour le composant AdminSidebarComponent.
+               Ce template définit la structure visuelle de la barre latérale de navigation.
+               Il utilise des directives Angular comme *ngFor pour générer dynamiquement
+               les éléments de navigation et [ngClass] ou [class.xxx] pour ajuster les styles
+               en fonction de l'état de la sidebar (réduite/étendue).
+-->
+
+<!--
+  Conteneur principal de la barre latérale :
+  - id="sidebar": Identifiant unique.
+  - class="bg-slate-700 text-white ...": Classes Tailwind CSS pour le style de fond, la couleur du texte,
+                                         la transition (pour l'animation de réduction/expansion),
+                                         le positionnement fixe et la hauteur plein écran.
+  - [class.sidebar-collapsed]="isCollapsed": Liaison de classe conditionnelle. Ajoute la classe CSS 'sidebar-collapsed'
+                                             (définie dans admin-sidebar.css) si la propriété 'isCollapsed'
+                                             du composant TypeScript est 'true'. Cela permet de styler différemment
+                                             la sidebar lorsqu'elle est réduite.
+-->
+<div id="sidebar" class="bg-slate-700 text-white transition-all duration-300 ease-in-out fixed h-full" [class.sidebar-collapsed]="isCollapsed">
+
+  <!-- Section supérieure de la sidebar : Logo et bouton de basculement -->
+  <div class="p-4 flex items-center justify-between border-b border-slate-600">
+    <!-- Conteneur pour le logo/titre -->
+    <div class="flex items-center">
+      <!--
+        Icône du logo (avion) :
+        - [class.hidden]="!isCollapsed": L'icône est masquée si la sidebar N'EST PAS réduite.
+                                          Elle est donc visible uniquement en mode réduit, servant de logo compact.
+      -->
+      <i class="fas fa-plane text-2xl logo-icon" [class.hidden]="!isCollapsed"></i>
+      <!--
+        Texte du logo ("Espace Admin") :
+        - class="logo-text ...": Classe pour styler le texte du logo.
+        - [class.hidden]="isCollapsed": Le texte est masqué si la sidebar EST réduite.
+                                         Visible uniquement en mode étendu.
+      -->
+      <span class="logo-text text-xl font-bold" [class.hidden]="isCollapsed">Espace Admin</span>
+    </div>
+    <!--
+      Bouton pour basculer l'état de la sidebar (réduire/étendre) :
+      - id="toggleSidebar": Identifiant unique pour le bouton.
+      - (click)="toggleCollapse()": Liaison d'événement. Appelle la méthode 'toggleCollapse()'
+                                    du composant TypeScript lorsque le bouton est cliqué.
+    -->
+    <button id="toggleSidebar" (click)="toggleCollapse()" class="text-white focus:outline-none">
+      <i class="fas fa-bars"></i> <!-- Icône "burger" (barres horizontales) -->
+    </button>
+  </div>
+
+  <!--
+    Navigation principale :
+    - class="mt-6": Marge supérieure pour espacer de la section du logo.
+  -->
+  <nav class="mt-6">
+    <!--
+      Boucle sur les éléments de navigation :
+      - *ngFor="let item of navItems": Directive structurelle Angular. Itère sur chaque objet 'item'
+                                       dans le tableau 'navItems' (défini dans le composant TypeScript).
+                                       Pour chaque 'item', le contenu de cette <div> est répété.
+    -->
+    <div *ngFor="let item of navItems">
+      <!--
+        Lien de navigation : <a>
+        - [routerLink]="item.route": Directive Angular pour la navigation. Lie le chemin de navigation
+                                     au champ 'route' de l'objet 'item'.
+                                     Bien que la navigation principale du dashboard soit gérée par 'sectionId'
+                                     et un événement personnalisé, 'routerLink' est utile ici pour
+                                     que 'routerLinkActive' fonctionne correctement.
+        - routerLinkActive="bg-slate-600": Directive Angular. Applique la classe CSS 'bg-slate-600'
+                                           (un fond plus foncé) au lien si la route actuelle correspond
+                                           à la valeur de [routerLink].
+        - [routerLinkActiveOptions]="{exact: item.exact || false}": Options pour 'routerLinkActive'.
+                                                                  '{exact: true}' signifie que la classe active
+                                                                  ne sera appliquée que si la route correspond exactement.
+                                                                  Utilisé pour l'élément "Tableau de bord".
+                                                                  La valeur 'item.exact || false' prend la valeur de 'item.exact'
+                                                                  si elle est définie, sinon 'false' par défaut.
+        - (click)="onNavLinkClick(item)": Liaison d'événement. Appelle la méthode 'onNavLinkClick(item)'
+                                          du composant TypeScript lorsque le lien est cliqué, en passant
+                                          l'objet 'item' actuel. C'est cet événement qui pilote réellement
+                                          l'affichage des sections dans AdminDashboardPageComponent.
+        - class="nav-item flex items-center ...": Classes Tailwind pour le style du lien (padding, alignement,
+                                                  couleur, effet au survol, transition).
+      -->
+      <a [routerLink]="item.route" routerLinkActive="bg-slate-600" [routerLinkActiveOptions]="{exact: item.exact || false}"
+        (click)="onNavLinkClick(item)"
+        class="nav-item flex items-center px-4 py-3 text-white hover:bg-slate-600 transition-colors duration-200">
+        <!--
+          Icône de l'élément de navigation :
+          - [class]="item.icon + ' mr-3'": Liaison de classe. Applique la classe d'icône (ex: "fas fa-users")
+                                           provenant de 'item.icon', et ajoute une marge à droite ('mr-3').
+        -->
+        <i [class]="item.icon + ' mr-3'"></i>
+        <!--
+          Texte de l'élément de navigation :
+          - class="nav-text": Classe pour un style potentiel du texte.
+          - [class.hidden]="isCollapsed": Le texte est masqué si la sidebar EST réduite.
+                                           Visible uniquement en mode étendu.
+          - {{ item.label }}: Interpolation. Affiche le libellé de l'élément de navigation.
+        -->
+        <span class="nav-text" [class.hidden]="isCollapsed">{{ item.label }}</span>
+      </a>
+    </div>
+  </nav>
+</div>

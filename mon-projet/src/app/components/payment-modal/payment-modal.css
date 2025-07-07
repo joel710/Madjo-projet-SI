@@ -1,0 +1,162 @@
+/* Animation d'entrée pour le modal */
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* Animation de sortie pour le modal */
+@keyframes modalFadeOut {
+    from {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+
+    to {
+        opacity: 0;
+        transform: scale(0.95) translateY(-20px);
+    }
+}
+
+/* Animation pour l'overlay */
+@keyframes overlayFadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* Styles pour le modal */
+.modal-overlay {
+    animation: overlayFadeIn 0.3s ease-out;
+}
+
+.modal-content {
+    animation: modalFadeIn 0.3s ease-out;
+}
+
+/* Styles pour les méthodes de paiement */
+.payment-method {
+    transition: all 0.2s ease-in-out;
+}
+
+.payment-method:hover {
+    transform: translateY(-2px);
+}
+
+.payment-method.selected {
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+/* Styles pour les inputs */
+input:focus {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Styles pour les boutons */
+.btn-primary {
+    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+    transition: all 0.2s ease-in-out;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.btn-primary:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+/* Styles pour les icônes de paiement */
+.payment-icon {
+    background: linear-gradient(135deg, var(--icon-color-start) 0%, var(--icon-color-end) 100%);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Styles pour les messages d'alerte */
+.alert-warning {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: 1px solid #f59e0b;
+}
+
+/* Responsive design */
+@media (max-width: 640px) {
+    .modal-content {
+        margin: 1rem;
+        max-width: calc(100vw - 2rem);
+    }
+
+    .payment-method {
+        padding: 0.75rem;
+    }
+
+    .payment-icon {
+        width: 2.5rem;
+        height: 2.5rem;
+        font-size: 1.25rem;
+    }
+}
+
+/* Styles pour les états de chargement */
+.loading-spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Styles pour les transitions fluides */
+* {
+    transition: border-color 0.2s ease-in-out,
+        background-color 0.2s ease-in-out,
+        color 0.2s ease-in-out;
+}
+
+/* Styles pour l'accessibilité */
+button:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+input:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+/* Styles pour les états désactivés */
+.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Styles pour les messages d'erreur */
+.error-message {
+    color: #dc2626;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+}
+
+/* Styles pour les succès */
+.success-message {
+    color: #059669;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+}

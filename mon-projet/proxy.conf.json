@@ -1,0 +1,11 @@
+{
+  "/api": {
+    "target": "http://localhost:8081/tg/voyage_pro/reservation/auth",
+    "secure": false,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/api": ""
+    },
+    "logLevel": "debug"
+  }
+}

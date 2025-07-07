@@ -1,0 +1,20 @@
+/*
+  @author VotreNomOuPseudo
+  @date YYYY-MM-DD
+  @description Fichier CSS spécifique au composant AdminTopbarComponent.
+               Ce fichier est destiné à contenir les styles CSS qui sont uniques
+               à la barre supérieure (topbar) de l'administration.
+
+               Actuellement, ce fichier est vide car la majorité, voire la totalité,
+               du style du composant AdminTopbarComponent est gérée directement dans
+               son template HTML (`admin-topbar.html`) à l'aide de classes utilitaires
+               Tailwind CSS.
+
+               Si des styles plus complexes ou spécifiques étaient nécessaires,
+               qui ne seraient pas pratiques à implémenter avec Tailwind directement
+               dans le HTML, ils pourraient être ajoutés ici. Par exemple :
+               - Styles pour des animations personnalisées non couvertes par Tailwind.
+               - Styles pour des éléments enfants très spécifiques dont le ciblage
+                 serait verbeux avec des classes dynamiques Angular uniquement.
+               - Overrides de styles globaux si absolument nécessaire pour ce composant.
+*/

@@ -1,0 +1,64 @@
+@startuml
+!theme materia
+
+left to right direction
+
+actor Client
+actor Agent
+actor Admin
+
+Agent <|-- Admin ' Admin hérite de Agent
+
+package "Actions du Client" {
+  usecase UC1 as "S'inscrire"
+  usecase UC2 as "Se connecter (Client)"
+  usecase UC3 as "Rechercher un vol"
+  usecase UC4 as "Créer une réservation"
+  usecase UC5 as "Consulter l'historique des réservations"
+  usecase UC6 as "Effectuer un paiement"
+}
+
+package "Actions de l'Agent" {
+  usecase UC7 as "Se connecter (Agent/Admin)" ' Un admin est aussi un agent
+  usecase UC8 as "Gérer les clients (CRUD)"
+  usecase UC9 as "Gérer les réservations (CRUD, Suivi)"
+  usecase UC10 as "Gérer les destinations (CRUD)"
+  usecase UC11 as "Gérer les paiements (Factures, Historique)"
+  usecase UC12 as "Gérer les vols (CRUD)"
+  usecase UC13 as "Gérer les types de billets (CRUD)"
+}
+
+package "Actions de l'Admin" {
+  usecase UC_Admin_GererComptesAgents as "Gérer les comptes Agents (CRUD)"
+}
+
+Client --> UC1
+Client --> UC2
+Client --> UC3
+Client --> UC4
+Client --> UC5
+Client --> UC6
+
+Agent --> UC7
+Agent --> UC8
+Agent --> UC9
+Agent --> UC10
+Agent --> UC11
+Agent --> UC12
+Agent --> UC13
+
+Admin --> UC_Admin_GererComptesAgents
+
+' Note: L'Admin hérite des cas d'utilisation de l'Agent.
+' Par exemple, un Admin peut aussi "Gérer les clients (CRUD)" via l'héritage.
+' UC7 "Se connecter" est pertinent pour Agent et Admin.
+
+' Relations entre les cas d'utilisation (optionnel, si clair dans les exigences)
+' Exemple: Effectuer un paiement pourrait étendre Créer une réservation si le paiement en fait partie
+' UC6 .> (UC4) : extends <<paiement optionnel>>
+' Cependant, garder simple selon les instructions si ce n'est pas clairement bénéfique.
+' Gérer les réservations pourrait inclure Gérer les paiements pour une réservation
+' UC9 ..> UC11 : include <<paiement pour réservation>>
+' Mais le Cahier des Charges les sépare, donc les liens directs aux acteurs sont plus clairs.
+
+@enduml

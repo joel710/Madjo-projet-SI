@@ -1,0 +1,33 @@
+<!-- app.html (ou app.component.html) -->
+<!-- Ce fichier est le template HTML pour notre composant racine, AppComponent. -->
+<!-- Il définit la structure HTML de base qui sera rendue lorsque AppComponent est utilisé. -->
+<!-- Dans la plupart des applications Single Page Application (SPA), ce template est assez simple -->
+<!-- et sert principalement de point d'ancrage pour le reste de l'application. -->
+
+<!-- Les lignes suivantes sont commentées. Si nous avions un composant HeaderComponent global -->
+<!-- (par exemple, une barre de navigation principale qui apparaît sur toutes les pages), -->
+<!-- nous pourrions décommenter la ligne <app-header></app-header> ici. -->
+<!-- Pour que cela fonctionne, HeaderComponent devrait être importé dans la propriété 'imports' -->
+<!-- du décorateur @Component dans le fichier app.ts (ou app.component.ts). -->
+<!-- <app-header></app-header> --> <!-- Exemple d'un composant d'en-tête global -->
+
+<!-- <router-outlet></router-outlet> : Ceci est une directive cruciale d'Angular Router. -->
+<!-- Elle agit comme un "espace réservé" ou un "point de montage". -->
+<!-- C'est à cet endroit précis qu'Angular va dynamiquement charger et afficher -->
+<!-- le composant correspondant à la route (URL) actuellement active. -->
+<!-- Par exemple, si l'utilisateur navigue vers '/login', le contenu de LoginPageComponent -->
+<!-- sera inséré ici, à la place de <router-outlet>. Si l'URL change pour '/home', -->
+<!-- alors HomePageComponent sera affiché ici. -->
+<!-- Tous les composants de page définis dans app.routes.ts seront rendus via ce router-outlet. -->
+<router-outlet></router-outlet>
+
+<!-- De même que pour l'en-tête, si nous avions un composant FooterComponent global -->
+<!-- (un pied de page commun à toutes les pages), nous pourrions le décommenter et l'ajouter ici. -->
+<!-- Il faudrait également l'importer dans app.ts. -->
+<!-- <app-footer></app-footer> --> <!-- Exemple d'un composant de pied de page global -->
+
+<!-- En résumé, ce template est souvent minimaliste car AppComponent délègue l'affichage -->
+<!-- du contenu principal des pages au système de routage via <router-outlet>. -->
+<!-- Toute structure HTML ou composant placé en dehors de <router-outlet> (comme un en-tête ou -->
+<!-- un pied de page global) sera visible sur toutes les "pages" de l'application qui sont -->
+<!-- gérées par ce routeur principal. -->
