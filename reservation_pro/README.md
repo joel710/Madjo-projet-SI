@@ -167,4 +167,4 @@ L'application démarrera typiquement sur `http://localhost:8081` (ou le port con
     ```
     De plus, la comparaison de dates sous forme de chaînes avec `LIKE` (`TO_CHAR(c_2.date_naiss, 'YYYY-MM-DD') = '%' || :date_naissance || '%'`) est incorrecte et inefficace. Une comparaison directe de dates ou une plage de dates serait plus appropriée.
 
--   La convention de nommage des classes pour les entités (ex: `AGENT`, `CLIENT`, `VOYAGE`) est actuellement en majuscules. La convention Java standard est PascalCase (ex: `Agent`, `Client`, `Voyage`). Envisagez de refactoriser ces noms pour la cohérence avec les meilleures pratiques Java si souhaité.
+-   La convention de nommage des classes pour les entités (ex: `AGENT`, `CLIENT`, `VOYAGE`) est actuellement en majuscules.
