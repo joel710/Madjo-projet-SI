@@ -9,8 +9,8 @@ import tg.voyage_pro.reservation_pro.dto.PaiementDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-07-07T18:27:47+0000",
-    comments = "version: 1.5.5.Final, compiler: javac, environment: Java 21.0.2 (Oracle Corporation)"
+    date = "2025-07-07T21:23:39+0000",
+    comments = "version: 1.5.5.Final, compiler: Eclipse JDT (IDE) 3.42.50.v20250628-1110, environment: Java 21.0.7 (Eclipse Adoptium)"
 )
 @Component
 public class PaiementMapperImpl implements PaiementMapper {
@@ -43,13 +43,13 @@ public class PaiementMapperImpl implements PaiementMapper {
 
         PaiementDTO paiementDTO = new PaiementDTO();
 
-        paiementDTO.setCodePaiement( entity.getCodePaiement() );
-        paiementDTO.setReservation( entity.getReservation() );
         paiementDTO.setAgent( entity.getAgent() );
+        paiementDTO.setCodePaiement( entity.getCodePaiement() );
         paiementDTO.setDatePaiement( entity.getDatePaiement() );
-        paiementDTO.setMontantPaiement( entity.getMontantPaiement() );
-        paiementDTO.setStatus( entity.getStatus() );
         paiementDTO.setMethod( entity.getMethod() );
+        paiementDTO.setMontantPaiement( entity.getMontantPaiement() );
+        paiementDTO.setReservation( entity.getReservation() );
+        paiementDTO.setStatus( entity.getStatus() );
 
         paiementDTO.setReservationId( entity.getReservation() != null ? entity.getReservation().getIdReservation() : null );
         paiementDTO.setAgentId( entity.getAgent() != null ? entity.getAgent().getIdAgent() : null );

@@ -9,8 +9,8 @@ import tg.voyage_pro.reservation_pro.dto.ClientDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-07-07T18:27:47+0000",
-    comments = "version: 1.5.5.Final, compiler: javac, environment: Java 21.0.2 (Oracle Corporation)"
+    date = "2025-07-07T21:23:39+0000",
+    comments = "version: 1.5.5.Final, compiler: Eclipse JDT (IDE) 3.42.50.v20250628-1110, environment: Java 21.0.7 (Eclipse Adoptium)"
 )
 @Component
 public class ClientMapperImpl implements ClientMapper {
@@ -23,15 +23,15 @@ public class ClientMapperImpl implements ClientMapper {
 
         CLIENT.CLIENTBuilder cLIENT = CLIENT.builder();
 
-        cLIENT.idClient( clientDto.getIdClient() );
-        cLIENT.nomClient( clientDto.getNomClient() );
-        cLIENT.prenomClient( clientDto.getPrenomClient() );
         cLIENT.dateNaiss( clientDto.getDateNaiss() );
-        cLIENT.mailClient( clientDto.getMailClient() );
-        cLIENT.telClient( clientDto.getTelClient() );
-        cLIENT.sexeClient( clientDto.getSexeClient() );
+        cLIENT.idClient( clientDto.getIdClient() );
         cLIENT.login( clientDto.getLogin() );
+        cLIENT.mailClient( clientDto.getMailClient() );
+        cLIENT.nomClient( clientDto.getNomClient() );
         cLIENT.password( clientDto.getPassword() );
+        cLIENT.prenomClient( clientDto.getPrenomClient() );
+        cLIENT.sexeClient( clientDto.getSexeClient() );
+        cLIENT.telClient( clientDto.getTelClient() );
 
         return cLIENT.build();
     }
@@ -44,15 +44,15 @@ public class ClientMapperImpl implements ClientMapper {
 
         ClientDTO.ClientDTOBuilder clientDTO = ClientDTO.builder();
 
-        clientDTO.idClient( client.getIdClient() );
-        clientDTO.nomClient( client.getNomClient() );
-        clientDTO.prenomClient( client.getPrenomClient() );
         clientDTO.dateNaiss( client.getDateNaiss() );
-        clientDTO.mailClient( client.getMailClient() );
-        clientDTO.telClient( client.getTelClient() );
-        clientDTO.sexeClient( client.getSexeClient() );
+        clientDTO.idClient( client.getIdClient() );
         clientDTO.login( client.getLogin() );
+        clientDTO.mailClient( client.getMailClient() );
+        clientDTO.nomClient( client.getNomClient() );
         clientDTO.password( client.getPassword() );
+        clientDTO.prenomClient( client.getPrenomClient() );
+        clientDTO.sexeClient( client.getSexeClient() );
+        clientDTO.telClient( client.getTelClient() );
 
         return clientDTO.build();
     }

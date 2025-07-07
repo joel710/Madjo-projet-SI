@@ -13,8 +13,8 @@ import tg.voyage_pro.reservation_pro.dto.ReservationDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-07-07T18:27:46+0000",
-    comments = "version: 1.5.5.Final, compiler: javac, environment: Java 21.0.2 (Oracle Corporation)"
+    date = "2025-07-07T21:23:38+0000",
+    comments = "version: 1.5.5.Final, compiler: Eclipse JDT (IDE) 3.42.50.v20250628-1110, environment: Java 21.0.7 (Eclipse Adoptium)"
 )
 @Component
 public class ReservationMapperImpl implements ReservationMapper {
